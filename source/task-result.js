@@ -117,14 +117,12 @@ export function of(value) {
   return create(() => Promise.resolve(value))
 }
 
-const myFetch = request =>
-  pipe(
-    create(() => fetch(request)),
-    map(f => f.json()),
-  )
-const getUrl = () =>
-  pipe(of('https://jsonplaceholder.typicode.com/posts/1'), delay(5000))
+export function recover(...args) {
+  if (args.length === 1) {
+    const value = args[0]
+    return task => recover(task, value)
+  }
 
-const task = pipe(getUrl(), flatMap(myFetch))
-
-console.log(await task())
+  const [task, value] = args
+  return () => pipe(task(), andThen(R.recover(value)), andThen(R.unwrap))
+}
